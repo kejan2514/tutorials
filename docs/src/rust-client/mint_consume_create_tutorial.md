@@ -118,6 +118,22 @@ loop {
             "All of Alice's notes consumed successfully. TX: {:?}",
             tx_id
         );
+
+        // The local `alice_account` value was created before this transaction,
+        // so it does not automatically reflect the new vault state. Sync the
+        // client, then retrieve Alice's account again before reading its balance.
+        client.sync_state().await?;
+        let updated_alice_account = client
+            .get_account(alice_account.id())
+            .await?
+            .expect("Alice's account should be tracked by the client");
+
+        let updated_balance = updated_alice_account
+            .account()
+            .vault()
+            .get_balance(faucet_account.id())?;
+        println!("Alice's updated balance: {}", updated_balance);
+
         break;
     } else {
         println!(
